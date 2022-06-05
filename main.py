@@ -1,6 +1,8 @@
 #curses module is used to draw/print text at any location in the window
-
 import curses 
+
+
+
 
 screen=curses.initscr() # Initializing the curses screen
 curses.noecho()         # Set to avoid printing input text on screen
@@ -15,12 +17,16 @@ highlight=curses.A_STANDOUT         # Text highlighting
 bold=curses.A_BOLD                  # Bold text
 normal=curses.A_NORMAL              # Normal text
 italics=curses.A_ITALIC             # Italic text
+underline=curses.A_UNDERLINE
+dim=curses.A_DIM
 
 ckey=screen.getch                   # 
 skey=screen.getstr                  #
 clear=screen.clear                  #
 border=screen.border                #
 refresh=screen.refresh              #
+box=screen.box
+sleep=curses.napms
 
 #################################################################################################################################
 #title function is used to print titles on screen
@@ -29,7 +35,15 @@ def title(title_name):
    middle_x=x_mid()
    x_padding=len(title_name)//2
    x_pos=middle_x-x_padding
-   screen.addstr(y_pos,x_pos,title_name,bold|italics)
+   screen.addstr(y_pos,x_pos,title_name,bold|highlight)
+   #screen.refresh()
+
+def center(y_offset,x_offset,string,style=normal):
+   y_pos=y_mid()+y_offset
+   middle_x=x_mid()+x_offset
+   x_padding=len(string)//2
+   x_pos=middle_x-x_padding
+   screen.addstr(y_pos,x_pos,string,style)
    screen.refresh()
 
 # x_mid function is used to find the middle value of the total x value of the current window size
@@ -119,9 +133,9 @@ def crypt_calc(msg_mat):
 
 # crypt handles and merges the encyption/decryption functions
 def crypt(message):
-    message_list=str_to_bin(message)        # convertion of strings to list of bits 
-    mess_list_bin=matrix(message_list)      # converting list of bits to matrix (list of lists)
-    return crypt_calc(mess_list_bin)        # return encrypted/decrypted message from the binary matrix
+    message_list=str_to_bin(message)        # -convertion of strings to list of bits 
+    mess_list_bin=matrix(message_list)      # -converting list of bits to matrix (list of lists)
+    return crypt_calc(mess_list_bin)        # -return encrypted/decrypted message from the binary matrix
 
 #################################################################################################################################
 
@@ -129,47 +143,131 @@ def crypt(message):
 ### Login Section ###
 #####################
 
-def default_login(passhide="*"):
+def default_login(passhide="#"):
     passhash=""
     full_pass=""
     index=0
+    passbox=screen.subwin(3,100,y_mid()-2,x_mid()-50)
+    clear()
     while True:
-        clear()
         border()
-        title("VAULT")
-        screen.addstr(y_mid(),x_mid()-23,"Enter Master Password:")
-        screen.addstr(y_mid(),x_mid(),passhash,bold)
-        screen.refresh()
+        passbox.border()
+        title("  VAULT  ")
+        center(-3,0,"Enter Master Password",bold)
+        center(-1,0,passhash,bold)
+        refresh()
         curses.curs_set(1)
         passwd=ckey()
         curses.curs_set(0)
-        if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER
+        clear()
+        if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER key
             if full_pass==mp:
                 return
-            return default_login()
+            clear()
+            center(1, 0, "Incorrect Password!")
+            refresh()
+            full_pass=""
+            passhash=""
+            continue
         elif passwd==curses.KEY_BACKSPACE:
             full_pass=full_pass[:-1]
             passhash=passhash[:-1]
             continue
-        elif passwd==27:
+        elif passwd==27: # 27 is ESC key
             return
         full_pass+=chr(passwd)
-        passhash+=passhide
+        if len(passhash)<84:
+            passhash+=passhide
+
+def init_login(passhide="#"):
+    clear()
+    full_pass1=""
+    full_pass2=""
+    passbox=screen.subwin(3,100,y_mid()-2,x_mid()-50)
+    passhash=""
+    while True:
+        border()
+        passbox.border()
+        title("  VAULT  ")
+        center(-3,0,"Enter A New Master Password",bold)
+        center(-1,0,passhash,bold)
+        refresh()
+        curses.curs_set(1)
+        passwd=ckey()
+        curses.curs_set(0)
+        clear()
+        if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER key
+            if len(full_pass1)<6:
+                clear()
+                center(1, 0, "Minimum 6 characters Required",dim)
+                refresh()
+                full_pass1=""
+                passhash=""
+                continue
+            else:
+                break
+        elif passwd==curses.KEY_BACKSPACE:
+            full_pass1=full_pass1[:-1]
+            passhash=passhash[:-1]
+            continue
+        elif passwd==27: # 27 is ESC key
+            return
+        full_pass1+=chr(passwd)
+        if len(passhash)<84:
+            passhash+=passhide
+    passhash=""
+    while True:
+        clear()
+        border()
+        passbox.border()
+        title("  VAULT  ")
+        center(-3,0,"Confirm The Master Password",bold)
+        center(-1,0,passhash,bold)
+        refresh()
+        curses.curs_set(1)
+        passwd=ckey()
+        curses.curs_set(0)
+        if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER key
+            break
+        elif passwd==curses.KEY_BACKSPACE:
+            full_pass2=full_pass2[:-1]
+            passhash=passhash[:-1]
+            continue
+        elif passwd==27: # 27 is ESC key
+            return
+        full_pass2+=chr(passwd)
+        if len(passhash)<84:
+            passhash+=passhide
+
+    if full_pass1==full_pass2:
+        clear()
+        border()
+        center(0, 0, "New Master Password Saved!",bold)
+        refresh()
+        sleep(4000)
+        f=open(".mp.txt","w")   
+        f.write(crypt(full_pass1))
+        f.close()
+        return
+    else:
+        clear()
+        border()
+        center(0, 0, "Passwords Doesn't Match! Try Again...")
+        refresh()
+        sleep(4000)
+        return init_login()
 
 
-
-f=open(".mp.txt","w")   
-f.write(crypt("12345"))
-f.close()
 try:
     open(".mp.txt","x")
     open(".list.txt","x")
+    init_login()
 except:
     masterPassword=open(".mp.txt","r")
     passwordList=open(".list.txt","r")
-masterPassword=masterPassword.read()
-masterPassword=masterPassword.strip()
-mp=crypt(masterPassword)
-mp=mp.strip()
-default_login()
+    masterPassword=masterPassword.read()
+    masterPassword=masterPassword.strip()
+    mp=crypt(masterPassword)
+    mp=mp.strip()
+    default_login()
 finish()
