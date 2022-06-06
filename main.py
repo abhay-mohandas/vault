@@ -1,7 +1,7 @@
-#curses module is used to draw/print text at any location in the window
-import curses 
 
-
+import curses #curses module is used to draw/print text at any location in the window
+import random
+from pyperclip import copy
 
 
 screen=curses.initscr() # Initializing the curses screen
@@ -20,6 +20,9 @@ italics=curses.A_ITALIC             # Italic text
 underline=curses.A_UNDERLINE
 dim=curses.A_DIM
 
+delay=3000                          # In milliseconds
+
+
 ckey=screen.getch                   # 
 skey=screen.getstr                  #
 clear=screen.clear                  #
@@ -28,7 +31,15 @@ refresh=screen.refresh              #
 box=screen.box
 sleep=curses.napms
 
+
+special_char=["!","@","#","$","%","^","&","*","?",">","<"]
+char=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+num=['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
+list_char=[char,num,special_char]
+pass_lenght=64
+
 #################################################################################################################################
+
 #title function is used to print titles on screen
 def title(title_name):
    y_pos=1
@@ -72,6 +83,11 @@ def finish():
    curses.curs_set(1)
    screen.keypad(False)
    curses.endwin()
+
+def highlight_checker(index,value):
+    if index==value:
+        return bold|highlight
+    return bold
 
 #################################################################################################################################
 
@@ -162,9 +178,9 @@ def default_login(passhide="#"):
         clear()
         if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER key
             if full_pass==mp:
-                return
+                return menu1()
             clear()
-            center(1, 0, "Incorrect Password!")
+            center(1, 0, "Incorrect Password!",dim)
             refresh()
             full_pass=""
             passhash=""
@@ -197,6 +213,7 @@ def init_login(passhide="#"):
         curses.curs_set(0)
         clear()
         if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER key
+            full_pass1=full_pass1.strip()
             if len(full_pass1)<6:
                 clear()
                 center(1, 0, "Minimum 6 characters Required",dim)
@@ -238,24 +255,165 @@ def init_login(passhide="#"):
         full_pass2+=chr(passwd)
         if len(passhash)<84:
             passhash+=passhide
-
+    clear()
+    border()
     if full_pass1==full_pass2:
-        clear()
-        border()
         center(0, 0, "New Master Password Saved!",bold)
         refresh()
-        sleep(4000)
+        sleep(delay)
         f=open(".mp.txt","w")   
         f.write(crypt(full_pass1))
         f.close()
-        return
+        return default_login()
     else:
-        clear()
-        border()
         center(0, 0, "Passwords Doesn't Match! Try Again...")
         refresh()
-        sleep(4000)
+        sleep(delay)
         return init_login()
+
+#################################################################################################################################
+####################
+### Menu Section ###
+####################
+
+def menu1():
+    menu1_list=[["  Password Manager  ",pass_manager],[" Password Generator ",pass_gen],["      Settings      ",config]]
+    checker=0
+    while True:
+        clear()
+        border()
+        title("  VAULT  ")
+        y_offset=-2
+        for x in menu1_list:
+            center(y_offset, 0, x[0], highlight_checker(menu1_list.index(x), checker))
+            y_offset+=2
+        refresh()
+        key=ckey()
+        if key==curses.KEY_DOWN:
+            checker+=1
+            if checker>=len(menu1_list):
+                checker=0
+        elif key==curses.KEY_UP:
+            checker-=1
+            if checker<0:
+                checker=len(menu1_list)-1
+        elif key==27: # 27 is ESC key
+            return
+        elif key==10 or key==curses.KEY_ENTER:
+            return menu1_list[checker][1]()
+        elif key==curses.KEY_BACKSPACE:
+            return default_login()
+
+
+#################################################################################################################################
+##################################
+### Password Generator Section ###
+##################################
+
+def pass_gen():
+    password=""
+    for a in range(pass_lenght):
+        x=random.choice(list_char)
+        y=random.choice(x)
+        password+=y
+    passbox=screen.subwin(3,100,y_mid()-2,x_mid()-50)
+    checker=0
+    pass_gen_options=["Copy to Clipboard","Re-Generate"]
+    clear()
+    while True:
+        border()
+        passbox.border()
+        title("  Password Generator  ")
+        center(-1, 0, password)
+        center(2, -20, pass_gen_options[0],highlight_checker(0, checker))
+        center(2, 20, pass_gen_options[1],highlight_checker(1, checker))
+        refresh
+        key=ckey()
+        if key==curses.KEY_RIGHT:
+            checker+=1
+            if checker>=len(pass_gen_options):
+                checker=0
+        elif key==curses.KEY_LEFT:
+            checker-=1
+            if checker<0:
+                checker=len(pass_gen_options)-1
+        elif key==27: # 27 is ESC key
+            return
+        elif key==10 or key==curses.KEY_ENTER:
+            if checker==0:
+                copy(password)
+                center(-4, 0, "Password Copied!",dim)
+                refresh()
+                continue
+            elif checker==1:
+                return pass_gen()
+        elif key==curses.KEY_BACKSPACE:
+            return menu1()
+        clear()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################################################################################################################################
+################################
+### Password Manager Section ###
+################################
+
+
+def pass_manager():
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################################################################################################################################
+########################
+### Settings Section ###
+########################
+
+
+def config():
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################################################################################################################################
 
 
 try:
