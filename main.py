@@ -1,7 +1,7 @@
 
 import curses #curses module is used to draw/print text at any location in the window
 import random
-from pyperclip import copy
+from pyperclip import copy, paste
 
 
 screen=curses.initscr() # Initializing the curses screen
@@ -9,7 +9,6 @@ curses.noecho()         # Set to avoid printing input text on screen
 curses.cbreak()         # Disable input buffer to get instantaneous input values
 curses.curs_set(0)      # Hide curser for the window
 screen.keypad(True)     # Enable keypad
-
 
 num_rows,num_cols=screen.getmaxyx() # Finds the maximum values of y and x of the current window size
 
@@ -25,6 +24,7 @@ delay=3000                          # In milliseconds
 
 ckey=screen.getch                   # 
 skey=screen.getstr                  #
+kkey=screen.getkey
 clear=screen.clear                  #
 border=screen.border                #
 refresh=screen.refresh              #
@@ -36,7 +36,7 @@ special_char=["!","@","#","$","%","^","&","*","?",">","<"]
 char=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 num=['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
 list_char=[char,num,special_char]
-pass_lenght=64
+pass_lenght=16
 
 #################################################################################################################################
 
@@ -46,16 +46,19 @@ def title(title_name):
    middle_x=x_mid()
    x_padding=len(title_name)//2
    x_pos=middle_x-x_padding
-   screen.addstr(y_pos,x_pos,title_name,bold|highlight)
+   screen.addstr(y_pos,x_pos," ##"+title_name+"## ",bold|highlight|italics)
    #screen.refresh()
 
-def center(y_offset,x_offset,string,style=normal):
-   y_pos=y_mid()+y_offset
-   middle_x=x_mid()+x_offset
-   x_padding=len(string)//2
-   x_pos=middle_x-x_padding
-   screen.addstr(y_pos,x_pos,string,style)
-   screen.refresh()
+def center(y_offset,x_offset,string,style=normal,noshift=False):
+    y_pos=y_mid()+y_offset
+    middle_x=x_mid()+x_offset
+    if noshift==True:
+        x_pos=middle_x
+    else:
+        x_padding=len(string)//2
+        x_pos=middle_x-x_padding
+    screen.addstr(y_pos,x_pos,string,style)
+    #screen.refresh()
 
 # x_mid function is used to find the middle value of the total x value of the current window size
 def x_mid():
@@ -168,7 +171,7 @@ def default_login(passhide="#"):
     while True:
         border()
         passbox.border()
-        title("  VAULT  ")
+        title("VAULT")
         center(-3,0,"Enter Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -204,7 +207,7 @@ def init_login(passhide="#"):
     while True:
         border()
         passbox.border()
-        title("  VAULT  ")
+        title("VAULT")
         center(-3,0,"Enter A New Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -237,7 +240,7 @@ def init_login(passhide="#"):
         clear()
         border()
         passbox.border()
-        title("  VAULT  ")
+        title("VAULT")
         center(-3,0,"Confirm The Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -282,7 +285,7 @@ def menu1():
     while True:
         clear()
         border()
-        title("  VAULT  ")
+        title("VAULT")
         y_offset=-2
         for x in menu1_list:
             center(y_offset, 0, x[0], highlight_checker(menu1_list.index(x), checker))
@@ -318,7 +321,7 @@ def pass_gen():
         password+=y
     passbox=screen.subwin(3,100,y_mid()-2,x_mid()-50)
     checker=0
-    pass_gen_options=["Copy to Clipboard","Re-Generate"]
+    pass_gen_options=[" Copy to Clipboard "," Re-Generate "]
     clear()
     while True:
         border()
@@ -352,20 +355,6 @@ def pass_gen():
         clear()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #################################################################################################################################
 ################################
 ### Password Manager Section ###
@@ -373,20 +362,153 @@ def pass_gen():
 
 
 def pass_manager():
-    pass
+    checker=0
+    menu_list=[["   Add New Password   ",add_password],[" List Saved Passwords ",list_password]]
+    while True:
+        clear()
+        border()
+        title("Password Manager")
+        center(-1, 0, menu_list[0][0],highlight_checker(0, checker))
+        center(1, 0, menu_list[1][0],highlight_checker(1, checker))
+        refresh()
+        key=ckey()
+        if key==curses.KEY_UP:
+            checker+=1
+            if checker>=len(menu_list):
+                checker=0
+        elif key==curses.KEY_DOWN:
+            checker-=1
+            if checker<0:
+                checker=len(menu_list)-1
+        elif key==27: # 27 is ESC key
+            return
+        elif key==10 or key==curses.KEY_ENTER:
+            return menu_list[checker][1]()
+        elif key==curses.KEY_BACKSPACE:
+            return menu1()
 
 
+def add_password():
+    username=enter_username()
+    password=enter_password()
+    file=open(".list.txt","a")
+    file.write(crypt(username))
+    file.write("::::::::")
+    file.write(crypt(password))
+    file.write("\n########\n")
+    file.close()
+    clear()
+    border()
+    center(-2, 0, "New Entry Saved!",bold)
+    refresh()
+    sleep(3000)
+    return pass_manager()
 
 
+def enter_username(username='',password=''):
+    passbox=screen.subwin(3,70,y_mid()-4,x_mid()-30)
+    clear()
+    while True:
+        border()
+        passbox.border()
+        center(-3,-40, "Enter Username:",bold)
+        center(-3,-28, username,bold,True)
+        refresh()
+        curses.curs_set(1)
+        key=ckey()
+        curses.curs_set(0)
+        if key==27: # 27 is ESC key
+            return finish()
+        elif key==10 or key==curses.KEY_ENTER:
+            username=username.strip()
+            if not username:
+                center(0, 0, "Username cannot be blank!",dim)
+                continue
+            return username
+        elif key==curses.KEY_BACKSPACE:
+            if not username:
+                return pass_manager()
+            username=username[:-1]
+        elif key==curses.KEY_LEFT or key==curses.KEY_RIGHT or key==curses.KEY_UP or key==curses.KEY_DOWN:
+            pass
+        else:
+            username+=chr(key)
+        clear()
+        
 
+def enter_password(password='',username=''):
+    passbox=screen.subwin(3,70,y_mid()-4,x_mid()-30)
+    clear()
+    while True:
+        border()
+        passbox.border()
+        center(-3,-40, "Enter Password:",bold)
+        center(-3,-28, password,bold,True)
+        refresh()
+        curses.curs_set(1)
+        key=ckey()
+        curses.curs_set(0)
+        if key==27: # 27 is ESC key
+            return finish()
+        elif key==10 or key==curses.KEY_ENTER:
+            password=password.strip()
+            if not password:
+                center(0, 0, "Password cannot be blank!",dim)
+                continue
+            return password
+        elif key==curses.KEY_BACKSPACE:
+            if not password:
+                return pass_manager()
+            password=password[:-1]
+        elif key==curses.KEY_LEFT or key==curses.KEY_RIGHT or key==curses.KEY_UP or key==curses.KEY_DOWN:
+            pass
+        else:
+            password+=chr(key)
+        clear()
 
-
-
-
-
-
-
-
+def list_password():
+    usrnm_pass=[]
+    y_max,x_max=yx_total(1,1)
+    listbox=screen.subwin(y_max-3,(x_max//3)-2,2,3)
+    showbox=screen.subwin(y_max-3,((x_max//3)*2)-4,2,(x_max//3)+3)
+    file=open(".list.txt","r")
+    read_file=file.read()
+    read_file=read_file.split("########")
+    for x in read_file:
+        x=x.strip()
+        if not x:
+            break
+        temp=x.split("::::::::")
+        usrnm_pass.append([crypt(temp[0]).strip(),crypt(temp[1]).strip()])
+    if len(usrnm_pass)<(y_max-5):
+        count=len(usrnm_pass)
+    else:
+        count=y_max-5
+    checker=0
+    while True:
+        clear()
+        title("Password List")
+        border()
+        listbox.border()
+        showbox.border()
+        for x in range(count):
+            screen.addstr(x+3,6,usrnm_pass[x][0],highlight_checker(x, checker))
+        refresh()
+        key=ckey()
+        if key==curses.KEY_UP:
+            checker+=1
+            if checker>=count:
+                checker=0
+        elif key==curses.KEY_DOWN:
+            checker-=1
+            if checker<0:
+                checker=count-1
+        elif key==27: # 27 is ESC key
+            return
+        elif key==10 or key==curses.KEY_ENTER:
+            return 
+        elif key==curses.KEY_BACKSPACE:
+            return pass_manager()
 
 
 
