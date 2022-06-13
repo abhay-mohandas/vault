@@ -19,7 +19,7 @@ italics=curses.A_ITALIC             # Italic text
 underline=curses.A_UNDERLINE
 dim=curses.A_DIM
 
-delay=3000                          # In milliseconds
+delay=2000                          # In milliseconds
 
 
 ckey=screen.getch                   # 
@@ -87,6 +87,7 @@ def finish():
    curses.curs_set(1)
    screen.keypad(False)
    curses.endwin()
+   exit()
 
 def highlight_checker(index,value,control=1):
     if control:
@@ -173,7 +174,7 @@ def default_login(passhide="#"):
     while True:
         border()
         passbox.border()
-        title("VAULT")
+        title("VAULT 2")
         center(-3,0,"Enter Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -195,7 +196,7 @@ def default_login(passhide="#"):
             passhash=passhash[:-1]
             continue
         elif passwd==27: # 27 is ESC key
-            return
+            return finish()
         full_pass+=chr(passwd)
         if len(passhash)<54:
             passhash+=passhide
@@ -209,7 +210,7 @@ def init_login(passhide="#"):
     while True:
         border()
         passbox.border()
-        title("VAULT")
+        title("VAULT 2")
         center(-3,0,"Enter A New Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -233,7 +234,7 @@ def init_login(passhide="#"):
             passhash=passhash[:-1]
             continue
         elif passwd==27: # 27 is ESC key
-            return
+            return finish()
         full_pass1+=chr(passwd)
         if len(passhash)<84:
             passhash+=passhide
@@ -242,7 +243,7 @@ def init_login(passhide="#"):
         clear()
         border()
         passbox.border()
-        title("VAULT")
+        title("VAULT 2")
         center(-3,0,"Confirm The Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -256,7 +257,7 @@ def init_login(passhide="#"):
             passhash=passhash[:-1]
             continue
         elif passwd==27: # 27 is ESC key
-            return
+            return finish()
         full_pass2+=chr(passwd)
         if len(passhash)<84:
             passhash+=passhide
@@ -266,10 +267,16 @@ def init_login(passhide="#"):
         center(0, 0, "New Master Password Saved!",bold)
         refresh()
         sleep(delay)
-        f=open(".mp.txt","w")   
-        f.write(crypt(full_pass1))
-        f.close()
-        return default_login()
+        file=open(".pass.crypt","w")   
+        file.write(crypt("Master"))
+        file.write("::::::::")
+        file.write(crypt(full_pass1))
+        file.write("\n########\n")
+        file.close()
+        center(-1, 0, "Restart The Program To Reset To New Master Password",bold)
+        center(+1, 0, "Press Any Key to Continue",dim)
+        ckey()
+        return finish()
     else:
         center(0, 0, "Passwords Doesn't Match! Try Again...")
         refresh()
@@ -287,7 +294,7 @@ def menu1():
     while True:
         clear()
         border()
-        title("VAULT")
+        title("VAULT 2")
         y_offset=-2
         for x in menu1_list:
             center(y_offset, 0, x[0], highlight_checker(menu1_list.index(x), checker))
@@ -303,7 +310,7 @@ def menu1():
             if checker<0:
                 checker=len(menu1_list)-1
         elif key==27: # 27 is ESC key
-            return
+            return finish()
         elif key==10 or key==curses.KEY_ENTER:
             return menu1_list[checker][1]()
         elif key==curses.KEY_BACKSPACE:
@@ -343,7 +350,7 @@ def pass_gen():
             if checker<0:
                 checker=len(pass_gen_options)-1
         elif key==27: # 27 is ESC key
-            return
+            return finish()
         elif key==10 or key==curses.KEY_ENTER:
             if checker==0:
                 try:
@@ -386,17 +393,23 @@ def pass_manager():
             if checker<0:
                 checker=len(menu_list)-1
         elif key==27: # 27 is ESC key
-            return
+            return finish()
         elif key==10 or key==curses.KEY_ENTER:
             return menu_list[checker][1]()
         elif key==curses.KEY_BACKSPACE:
             return menu1()
 
 
+#################################################################################################################################
+############################
+### Add Password Section ###
+############################
+
+
 def add_password():
     username=enter_username()
     password=enter_password()
-    file=open(".list.txt","a")
+    file=open(".pass.crypt","a")
     file.write(crypt(username))
     file.write("::::::::")
     file.write(crypt(password))
@@ -406,7 +419,7 @@ def add_password():
     border()
     center(-2, 0, "New Entry Saved!",bold)
     refresh()
-    sleep(3000)
+    sleep(delay)
     return pass_manager()
 
 
@@ -473,27 +486,22 @@ def enter_password(password='',username=''):
             password+=chr(key)
         clear()
 
+#################################################################################################################################
+#############################
+### List Password Section ###
+#############################
+
 def list_password():
+    list_update_read()
     clear()
     refresh()
-    usrnm_pass=[]
-    xlen=0
-    file=open(".list.txt","r")
-    read_file=file.read()
-    read_file=read_file.split("########")
-    for x in read_file:
-        x=x.strip()
-        if not x:
-            break
-        temp=x.split("::::::::")
-        username=crypt(temp[0]).strip()
-        if xlen<len(username):
-            xlen=len(username)+6
-        passwd=crypt(temp[1]).strip()
-        usrnm_pass.append([username,passwd])
-    y_max,x_max=yx_total(1,1)
-    #listpad=screen.subwin(5,x_mid()-20)
-    #listpad.overlay(screen)
+    if len(usrnm_pass)==0:
+        border()
+        center(-1,0, "No Password Entries Found! Add Passwords To Be Listed",bold)
+        center(+1,0, "Enter Any Key to Continue",dim)
+        refresh()
+        ckey()
+        return pass_manager()
     checker=0
     keep_track=0
     y_loc=0
@@ -503,13 +511,12 @@ def list_password():
     while True:
         y_ref,x_ref=yx_total(1,1)
         listpad.clear()
-        clear()
+        #clear()
         title("Password List")
         border()
         refresh()
         listpad.border()
         for x in range(len(usrnm_pass)):
-            #listpad.addstr(x,0,usrnm_pass[x][0],highlight_checker(x, checker))
             listpad.addstr(x+1,3,usrnm_pass[x][0],highlight_checker(x, checker))
         listpad.refresh(y_loc,0,3,x_mid()-(xlen//2),y_ref-2,x_mid()+25)
         key=listpad.getch()
@@ -523,16 +530,101 @@ def list_password():
                 checker-=1
             if y_loc>0:
                 y_loc-=1
-
         elif key==27: # 27 is ESC key
             return finish()
         elif key==10 or key==curses.KEY_ENTER:
-            pass
+            return show_password(usrnm_pass[checker])
         elif key==curses.KEY_BACKSPACE:
             return pass_manager()
 
+def show_password(pass_details):
+    clear()
+    y_max,x_max=yx_total()
+    username,password=pass_details[0],pass_details[1]
+    if xlen>ylen and xlen>50:
+        long=xlen
+    elif ylen>50:
+        long=ylen
+    else:
+        long=50
+    usrnbox=screen.subwin(3,long,y_mid()-4,x_mid()-(x_mid()//2)-5)
+    passbox=screen.subwin(3,long,y_mid()-1,x_mid()-(x_mid()//2)-5)
+    options=[["  Copy Username  ",copy,username],
+             ["  Copy Password  ",copy,password],
+             [" Update Username ",update_details,["username",username]],
+             [" Update Password ",update_details,["password",password]],
+             ["     Delete      ",delete_details,[username,password]]]
+    checker=0
+    while True:
+        border()
+        title("Details")
+        usrnbox.border()
+        passbox.border()
+        center(-3, -x_mid()+(4*(x_mid()//10)), 'Username:',bold)
+        center(0, -x_mid()+(4*(x_mid()//10)), 'Password:',bold)
+        center(-3, -x_mid()//2, username,bold,True)
+        center(0, -x_mid()//2, password,bold,True)
+        option_spacing=y_mid()//4
+        temp=(y_mid()//10)*6
+        for x in range(len(options)):
+            center(-temp+x, +(x_mid()//2), options[x][0],highlight_checker(x, checker))
+            temp-=option_spacing
+        refresh()
+        key=ckey()
+        if key==curses.KEY_DOWN:
+            checker+=1
+            if checker>(len(options)-1):
+                checker=0
+        elif key==curses.KEY_UP:
+            checker-=1
+            if checker<0:
+                checker=len(options)-1
+        elif key==27: # 27 is ESC key
+            return finish()
+        elif key==10 or key==curses.KEY_ENTER:
+            function=options[checker][1]
+            data=options[checker][2]
+            if function==copy:
+                try:
+                    function(data)
+                    center(-6, 0, "Copied Successfully!",dim)
+                except:
+                    center(-6, 0, "Failed To Copy To Clipboard",dim)
+                continue
+            return function(data)
+        elif key==curses.KEY_BACKSPACE:
+            return list_password()
+        clear()
 
 
+def update_details(data):
+    pass
+
+def delete_details(data):
+    global usrnm_pass
+    checker=0
+    while True:
+        clear()
+        border()
+        center(-2, 0, "Confirm?",bold)
+        center(1, -x_mid()//4, "  Yes  ",highlight_checker(0,checker))
+        center(1, +x_mid()//4, "   No  ",highlight_checker(1,checker))
+        key=ckey()
+        if key==curses.KEY_RIGHT or key==curses.KEY_LEFT:
+            if checker:
+                checker=0
+            else:
+                checker=1
+        elif key==10 or key==curses.KEY_ENTER:
+            if checker:
+                return list_password()
+            else:
+                index=usrnm_pass.index(data)
+                usrnm_pass.pop(index)
+                list_update_write()
+                return list_password()
+        elif key==curses.KEY_BACKSPACE:
+            return list_password()
 
 #################################################################################################################################
 ########################
@@ -549,26 +641,59 @@ def config():
 
 
 
+#################################################################################################################################
+######################
+### Update Section ###
+######################
+
+def list_update_read():
+    global mp,usrnm_pass,xlen,ylen
+    usrnm_pass=[]
+    file=open(".pass.crypt","r")
+    read_file=file.read()
+    read_file=read_file.split("########")
+    for x in read_file:
+        x=x.strip()
+        if not x:
+            break
+        temp=x.split("::::::::")
+        username=crypt(temp[0]).strip()
+        passwd=crypt(temp[1]).strip()
+        if username=="Master":
+            mp=passwd
+            track=False
+            continue
+        if xlen<len(username):
+            xlen=len(username)+6
+        if ylen<len(passwd):
+            ylen=len(passwd)+6
+        usrnm_pass.append([username,passwd])
 
 
-
-
-
-
+def list_update_write():
+    file=open(".pass.crypt","w")
+    file.write(crypt("Master"))
+    file.write("::::::::")
+    file.write(crypt(mp))
+    file.write("\n########\n")
+    for x in usrnm_pass:
+        file.write(crypt(x[0]))
+        file.write("::::::::")
+        file.write(crypt(x[1]))
+        file.write("\n########\n")
+    file.close()
 
 #################################################################################################################################
 
+mp=""
+usrnm_pass=[]
+xlen=0
+ylen=0
 
 try:
-    open(".mp.txt","x")
-    open(".list.txt","x")
+    open(".pass.crypt","x")
     init_login()
 except:
-    masterPassword=open(".mp.txt","r")
-    passwordList=open(".list.txt","r")
-    masterPassword=masterPassword.read()
-    masterPassword=masterPassword.strip()
-    mp=crypt(masterPassword)
-    mp=mp.strip()
+    list_update_read()
     default_login()
 finish()
