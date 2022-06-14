@@ -3,6 +3,7 @@ import curses #curses module is used to draw/print text at any location in the w
 import random,secrets
 from pyperclip import copy, paste
 
+TITLE="VAULT v2"
 
 screen=curses.initscr() # Initializing the curses screen
 curses.noecho()         # Set to avoid printing input text on screen
@@ -32,9 +33,9 @@ box=screen.box
 sleep=curses.napms
 
 
-special_char=["!","@","#","$","%","^","&","*","?",">","<"]
+special_char=["!","@","#","$","%","^","&","*","?",">","<",'(',')','_','-','+','=','|','`','~']
 char=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-num=['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
+num=['0','1','2','3','4','5','6','7','8','9']
 list_char=[char,num,special_char]
 pass_lenght=30
 
@@ -174,7 +175,7 @@ def default_login(passhide="#"):
     while True:
         border()
         passbox.border()
-        title("VAULT 2")
+        title(TITLE)
         center(-3,0,"Enter Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -210,7 +211,7 @@ def init_login(passhide="#"):
     while True:
         border()
         passbox.border()
-        title("VAULT 2")
+        title(TITLE)
         center(-3,0,"Enter A New Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -243,7 +244,7 @@ def init_login(passhide="#"):
         clear()
         border()
         passbox.border()
-        title("VAULT 2")
+        title(TITLE)
         center(-3,0,"Confirm The Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
@@ -294,7 +295,7 @@ def menu1():
     while True:
         clear()
         border()
-        title("VAULT 2")
+        title(TITLE)
         y_offset=-2
         for x in menu1_list:
             center(y_offset, 0, x[0], highlight_checker(menu1_list.index(x), checker))
@@ -551,8 +552,8 @@ def show_password(pass_details):
     passbox=screen.subwin(3,long,y_mid()-1,x_mid()-(x_mid()//2)-5)
     options=[["  Copy Username  ",copy,username],
              ["  Copy Password  ",copy,password],
-             [" Update Username ",update_details,["username",username]],
-             [" Update Password ",update_details,["password",password]],
+             [" Update Username ",update_details,[1,username,password]],
+             [" Update Password ",update_details,[0,username,password]],
              ["     Delete      ",delete_details,[username,password]]]
     checker=0
     while True:
@@ -598,7 +599,48 @@ def show_password(pass_details):
 
 
 def update_details(data):
-    pass
+    global usrnm_pass
+    condition,username,password=data
+    databox=screen.subwin(3,x_mid()-(x_mid()//3),y_mid()-1, x_mid()-(x_mid()//4))
+    if condition:
+        mod,new_pass="",password
+        header="Username"
+    else:
+        new_usrnm,mod=username,""
+        header="Password"
+    while True:
+        clear()
+        databox.border()
+        border()
+        title("Update "+header)
+        center(0, -x_mid()+(x_mid()//2),"Enter the New "+header+":",bold,True)
+        center(0, -x_mid()+((x_mid()//5)*4), mod,bold,True)
+        refresh()
+        curses.curs_set(1)
+        key=ckey()
+        curses.curs_set(0)
+        if key==curses.KEY_BACKSPACE:
+            if len(mod)>0:
+                mod=mod[:-1]
+            else:
+                return list_password()
+        elif key==10 or key==curses.KEY_ENTER:
+            if condition:
+                new_usrnm=mod
+            else:
+                new_pass=mod
+            new_data=[new_usrnm,new_pass]
+            index=usrnm_pass.index([username,password])
+            usrnm_pass.pop(index)
+            usrnm_pass.insert(index, new_data)
+            list_update_write()
+            return list_password()
+        elif key==27:
+            return finish()
+        elif key==curses.KEY_LEFT or key==curses.KEY_RIGHT or key==curses.KEY_UP or key==curses.KEY_DOWN:
+            continue
+        else:
+            mod+=chr(key)
 
 def delete_details(data):
     global usrnm_pass
@@ -625,6 +667,7 @@ def delete_details(data):
                 return list_password()
         elif key==curses.KEY_BACKSPACE:
             return list_password()
+
 
 #################################################################################################################################
 ########################
