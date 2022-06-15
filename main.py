@@ -1,9 +1,9 @@
 
 import curses #curses module is used to draw/print text at any location in the window
-import random,secrets
+import secrets
 from pyperclip import copy, paste
 
-TITLE="VAULT v2"
+
 
 screen=curses.initscr() # Initializing the curses screen
 curses.noecho()         # Set to avoid printing input text on screen
@@ -20,8 +20,6 @@ italics=curses.A_ITALIC             # Italic text
 underline=curses.A_UNDERLINE
 dim=curses.A_DIM
 
-delay=2000                          # In milliseconds
-
 
 ckey=screen.getch                   # 
 skey=screen.getstr                  #
@@ -37,13 +35,13 @@ special_char=["!","@","#","$","%","^","&","*","?",">","<",'(',')','_','-','+','=
 char=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 num=['0','1','2','3','4','5','6','7','8','9']
 list_char=[char,num,special_char]
-pass_lenght=30
+
 
 #################################################################################################################################
 
 #title function is used to print titles on screen
 def title(title_name,type=screen):
-    title_name= " ##"+title_name+"## "
+    title_name= prefix+title_name+suffix
     y_pos=1
     middle_x=x_mid()
     x_padding=len(title_name)//2
@@ -290,7 +288,7 @@ def init_login(passhide="#"):
 ####################
 
 def menu1():
-    menu1_list=[["  Password Manager  ",pass_manager],[" Password Generator ",pass_gen],["      Settings      ",config]]
+    menu1_list=[["  Password Manager  ",pass_manager],[" Password Generator ",pass_gen],["      Settings      ",settings]]
     checker=0
     while True:
         clear()
@@ -325,11 +323,11 @@ def menu1():
 
 def pass_gen():
     password=""
-    for a in range(pass_lenght):
+    for a in range(pass_gen_length):
         x=secrets.choice(list_char)
         y=secrets.choice(x)
         password+=y
-    passbox=screen.subwin(3,pass_lenght+10,y_mid()-2,x_mid()-((pass_lenght//2)+5))
+    passbox=screen.subwin(3,pass_gen_length+10,y_mid()-2,x_mid()-((pass_gen_length//2)+5))
     checker=0
     pass_gen_options=[" Copy to Clipboard "," Re-Generate "]
     clear()
@@ -674,14 +672,93 @@ def delete_details(data):
 ### Settings Section ###
 ########################
 
-
-def config():
+def settings():
     pass
 
+#################################################################################################################################
+########################
+### Config Section ###
+########################
+
+
+def config_read():
+    global pass_gen_length,prefix,suffix,TITLE,delay
+    file=open("settings.config","r")
+    conf=file.read()
+    conf_list= ["generated_password_lenght",
+                "prefix",
+                "suffix",
+                "title",
+                "delay"]
+    conf=conf.split("\n")
+    for x in conf:
+        if x.startswith("#"):
+            continue
+        x=x.strip()
+        if not x:
+            continue
+        temp=x.split("=")
+        defin=temp[0].strip()
+        value=temp[1].strip()
+        if conf_list[0] in defin:
+            pass_gen_length=int(value)
+        elif conf_list[1] in defin:
+            prefix=value[1:-1]
+        elif conf_list[2] in defin:
+            suffix=value[1:-1]
+        elif conf_list[3] in defin:
+            TITLE=value[1:-1]
+        elif conf_list[4] in defin:
+            delay=int(value)
+    file.close()
+
+
+def config_write():
+    file=open("settings.config","w")
+    notice="# This is the program config file. This can be modified by editing (Not recommended) or can be done via settings within the program.\n#This is setup to avoid direct modification of the code file.\n#Comments can be added to the file by placing '#' at the beginning of the line.\n\n"
+    file.write(notice)
+    file.write("\n")
+    init_conf_list=[["#Option to set the generated password lenght.\n#Max lenght is limited to 68 characters to fit the screen.\n#Set a value from 8-64\n",
+                            "generated_password_lenght= "+str(pass_gen_length)+"\n"],
+                    ["#Option to set the prefix and suffix of the title. Include quotation for strings (Ex:' ##' and '## ')\n",
+                            "prefix= '"+prefix+"'\n",
+                            "suffix= '"+suffix+"'\n"],
+                    ["#Option to set the program name. Default name is 'Vault' followed by its version. Include quotation for strings\n",
+                            "title= '"+TITLE+"'\n"],
+                    ["#Option to set delay in milliseconds for the displayed messages\n",
+                            "delay= "+str(delay)+"\n"]]
+    for x in init_conf_list:
+        for y in x:
+            file.write(y)
+            file.write("\n\n")
+    file.close()
 
 
 
+def init_config(warning="No Configuration File Found!"):
+    clear()
+    border()
+    center(-2, 0, warning,bold)
+    center(0, 0, "Press Any Key To Load Default Configuration")
+    refresh()
+    key=ckey()
+    config_write()
+    clear()
+    border()
+    center(0, 0, "Default Configurations Are Loaded Successfully!",bold)
+    refresh()
+    sleep(delay)
 
+
+def config_error():
+    init_config("Warning! There Was An Error Loading The Configuration File!")
+    clear()
+    border()
+    center(-2, 0, "Restart The Program To Run The Configuration File",bold)
+    center(0, 0, "Press Any Key to Exit The Program")
+    refresh()
+    key=ckey()
+    finish()
 
 
 #################################################################################################################################
@@ -727,11 +804,34 @@ def list_update_write():
     file.close()
 
 #################################################################################################################################
+###############################
+### Global Variable Section ###
+###############################
+
 
 mp=""
 usrnm_pass=[]
 xlen=0
 ylen=0
+
+pass_gen_length=18
+
+prefix=" ##"
+suffix="## "
+TITLE="VAULT v2"
+
+delay=2000                          # In milliseconds
+
+
+try:
+    open("settings.config","x")
+    init_config()
+    config_read()
+except:
+    try:
+        config_read()
+    except:
+        config_error()
 
 try:
     open(".pass.crypt","x")
@@ -739,4 +839,6 @@ try:
 except:
     list_update_read()
     default_login()
+
+
 finish()
