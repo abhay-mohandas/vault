@@ -100,7 +100,7 @@ def highlight_checker(index,value,control=1):
 ### Encryption section ###
 ##########################
 
-# Note: This is a custom keyless encryption
+# Note: This is a custom keyless encryption written from scratch
 
 # str_to_bin takes the characters in a string and returns a list of individual character in 7-bit binary format 
 def str_to_bin(in_string):
@@ -164,7 +164,7 @@ def crypt(message):
 ### Login Section ###
 #####################
 
-def default_login(passhide="#"):
+def default_login():
     passhash=""
     full_pass=""
     index=0
@@ -682,14 +682,15 @@ def settings():
 
 
 def config_read():
-    global pass_gen_length,prefix,suffix,TITLE,delay
+    global pass_gen_length,prefix,suffix,TITLE,delay,passhide
     file=open("settings.config","r")
     conf=file.read()
     conf_list= ["generated_password_lenght",
                 "prefix",
                 "suffix",
                 "title",
-                "delay"]
+                "delay",
+                "password_hide"]
     conf=conf.split("\n")
     for x in conf:
         if x.startswith("#"):
@@ -710,15 +711,17 @@ def config_read():
             TITLE=value[1:-1]
         elif conf_list[4] in defin:
             delay=int(value)
+        elif conf_list[5] in defin:
+            passhide=value[1:-1]
     file.close()
 
 
 def config_write():
     file=open("settings.config","w")
-    notice="# This is the program config file. This can be modified by editing (Not recommended) or can be done via settings within the program.\n#This is setup to avoid direct modification of the code file.\n#Comments can be added to the file by placing '#' at the beginning of the line.\n\n"
+    notice="#This is the program config file. This can be modified by editing (Not recommended) or can be done via settings within the program.\n#This is setup to avoid direct modification of the code file.\n#Comments can be added to the file by placing '#' at the beginning of the line.\n\n"
     file.write(notice)
     file.write("\n")
-    init_conf_list=[["#Option to set the generated password lenght.\n#Max lenght is limited to 68 characters to fit the screen.\n#Set a value from 8-64\n",
+    init_conf_list=[["#Option to set the generated password lenght. Max lenght is limited to 68 characters to fit the screen.\n#Set a value from 8-64\n",
                             "generated_password_lenght= "+str(pass_gen_length)+"\n"],
                     ["#Option to set the prefix and suffix of the title. Include quotation for strings (Ex:' ##' and '## ')\n",
                             "prefix= '"+prefix+"'\n",
@@ -726,11 +729,14 @@ def config_write():
                     ["#Option to set the program name. Default name is 'Vault' followed by its version. Include quotation for strings\n",
                             "title= '"+TITLE+"'\n"],
                     ["#Option to set delay in milliseconds for the displayed messages\n",
-                            "delay= "+str(delay)+"\n"]]
+                            "delay= "+str(delay)+"\n"],
+                    ["#Option to set the password hider. Default hider is '#' and can be empty to hide passwords completely. Include quotation for strings\n",
+                            "password_hide= '"+passhide+"'\n"]]
     for x in init_conf_list:
         for y in x:
             file.write(y)
-            file.write("\n\n")
+            file.write("\n")
+        file.write("\n\n")
     file.close()
 
 
@@ -808,7 +814,7 @@ def list_update_write():
 ### Global Variable Section ###
 ###############################
 
-
+passhide="#"
 mp=""
 usrnm_pass=[]
 xlen=0
