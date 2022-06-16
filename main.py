@@ -1,4 +1,3 @@
-
 import curses #curses module is used to draw/print text at any location in the window
 import secrets
 from pyperclip import copy, paste
@@ -673,7 +672,90 @@ def delete_details(data):
 ########################
 
 def settings():
-    pass
+    global delay,pass_gen_length,TITLE,prefix,suffix
+    action_list=[100,2]
+    checker=0
+    while True:
+        clear()
+        border()
+        center(-6, 0, "  Delay:  < "+str(delay)+" >  ",highlight_checker(0, checker))
+        center(-4, 0, " Generator Password Lenght:  < "+str(pass_gen_length)+" >  ",highlight_checker(1, checker))
+        center(-2, 0, "  Title:  '"+TITLE+"'  ",highlight_checker(2, checker))
+        center(0, 0, "  Title Prefix:  '"+prefix+"'  ",highlight_checker(3, checker))
+        center(2, 0, "  Title Suffix:  '"+suffix+"'  ",highlight_checker(4, checker))
+        refresh()
+        key=ckey()
+        if key==curses.KEY_DOWN:
+            checker+=1
+            if checker>4:
+                checker=0
+        elif key==curses.KEY_UP:
+            checker-=1
+            if checker<0:
+                checker=4
+        elif key==curses.KEY_LEFT:
+            if checker==0:
+                delay-=action_list[checker]
+            elif checker==1:
+                pass_gen_length-=action_list[checker]
+        elif key==curses.KEY_RIGHT:
+            if checker==0:
+                delay+=action_list[checker]
+            elif checker==1:
+                pass_gen_length+=action_list[checker]
+        elif key==10:
+            if checker==2:
+                change_title(0)
+            if checker==3:
+                change_title(1)
+            if checker==4:
+                change_title(2)
+            config_write()
+        elif key==curses.KEY_BACKSPACE:
+            config_write()
+            return menu1()
+        elif key==27:
+            config_write()
+            return finish()
+
+
+
+
+
+def change_title(index):
+    global TITLE,prefix,suffix
+    option_list=["Enter New Title:",
+                 "Enter New Prefix:",
+                 "Enter New Suffix:"]
+    textbox=screen.subwin(3,x_mid(),y_mid()-1, x_mid()-(x_mid()//4))
+    new_val=""
+    while True:
+        clear()
+        border()
+        textbox.border()
+        center(0, -x_mid()//2, option_list[index],bold)
+        center(0, -(x_mid()//4)+4, "'"+new_val+"'",bold,True)
+        refresh()
+        key=ckey()
+        if key==curses.KEY_LEFT or key==curses.KEY_RIGHT or key==curses.KEY_UP or key==curses.KEY_DOWN:
+            continue
+        elif key==curses.KEY_BACKSPACE:
+            if not new_val:
+                return
+            new_val=new_val[:-1]
+        elif key==27:
+            return finish()
+        elif key==10:
+            if index==0:
+                TITLE=new_val
+            elif index==1:
+                prefix=new_val
+            elif index==2:
+                suffix=new_val
+            return
+        else:
+            new_val+=chr(key)
+
 
 #################################################################################################################################
 ########################
@@ -684,23 +766,21 @@ def settings():
 def config_read():
     global pass_gen_length,prefix,suffix,TITLE,delay,passhide
     file=open("settings.config","r")
-    conf=file.read()
     conf_list= ["generated_password_lenght",
                 "prefix",
                 "suffix",
                 "title",
                 "delay",
                 "password_hide"]
-    conf=conf.split("\n")
-    for x in conf:
-        if x.startswith("#"):
-            continue
+    for x in file:
         x=x.strip()
-        if not x:
+        if x.startswith("#") or not(x):
             continue
         temp=x.split("=")
         defin=temp[0].strip()
         value=temp[1].strip()
+        if not(value) or not(defin):
+            continue
         if conf_list[0] in defin:
             pass_gen_length=int(value)
         elif conf_list[1] in defin:
@@ -740,12 +820,11 @@ def config_write():
     file.close()
 
 
-
 def init_config(warning="No Configuration File Found!"):
     clear()
     border()
     center(-2, 0, warning,bold)
-    center(0, 0, "Press Any Key To Load Default Configuration")
+    center(0, 0, "Press Any Key To Load Default Configuration",dim)
     refresh()
     key=ckey()
     config_write()
@@ -761,7 +840,7 @@ def config_error():
     clear()
     border()
     center(-2, 0, "Restart The Program To Run The Configuration File",bold)
-    center(0, 0, "Press Any Key to Exit The Program")
+    center(0, 0, "Press Any Key to Exit The Program",dim)
     refresh()
     key=ckey()
     finish()
@@ -824,7 +903,7 @@ pass_gen_length=18
 
 prefix=" ##"
 suffix="## "
-TITLE="VAULT v2"
+TITLE="VAULT v3"
 
 delay=2000                          # In milliseconds
 
