@@ -1,14 +1,15 @@
-import curses #curses module is used to draw/print text at any location in the window
-import secrets
-from pyperclip import copy, paste
+#! /usr/bin/python
+
+import curses                       # curses module is used to draw/print text at any location in the window
+import secrets                      # secret module is used to generate password. This is recommended over random module for passwords
+from pyperclip import copy, paste   # pyperclip is used to copy and paste details to the clipboard
 
 
-
-screen=curses.initscr() # Initializing the curses screen
-curses.noecho()         # Set to avoid printing input text on screen
-curses.cbreak()         # Disable input buffer to get instantaneous input values
-curses.curs_set(0)      # Hide curser for the window
-screen.keypad(True)     # Enable keypad
+screen=curses.initscr()             # Initializing the curses screen
+curses.noecho()                     # Set to avoid printing input text on screen
+curses.cbreak()                     # Disable input buffer to get instantaneous input values
+curses.curs_set(0)                  # Hide curser for the window
+screen.keypad(True)                 # Enable keypad to get arrow and other keys working
 
 num_rows,num_cols=screen.getmaxyx() # Finds the maximum values of y and x of the current window size
 
@@ -16,24 +17,24 @@ highlight=curses.A_STANDOUT         # Text highlighting
 bold=curses.A_BOLD                  # Bold text
 normal=curses.A_NORMAL              # Normal text
 italics=curses.A_ITALIC             # Italic text
-underline=curses.A_UNDERLINE
-dim=curses.A_DIM
+underline=curses.A_UNDERLINE        # Underlines the text
+dim=curses.A_DIM                    # Dims the text
 
 
 ckey=screen.getch                   # 
 skey=screen.getstr                  #
-kkey=screen.getkey
+kkey=screen.getkey                  #
 clear=screen.clear                  #
 border=screen.border                #
 refresh=screen.refresh              #
-box=screen.box
-sleep=curses.napms
+box=screen.box                      #
+sleep=curses.napms                  #
 
 
-special_char=["!","@","#","$","%","^","&","*","?",">","<",'(',')','_','-','+','=','|','`','~']
-char=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-num=['0','1','2','3','4','5','6','7','8','9']
-list_char=[char,num,special_char]
+special_char=("!","@","#","$","%","^","&","*","?",">","<",'(',')','_','-','+','=','|','`','~')
+char=('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
+num=('0','1','2','3','4','5','6','7','8','9')
+list_char=(char,num,special_char)
 
 
 #################################################################################################################################
@@ -46,18 +47,17 @@ def title(title_name,type=screen):
     x_padding=len(title_name)//2
     x_pos=middle_x-x_padding
     screen.addstr(y_pos,x_pos,title_name,bold|highlight|italics)
-   #screen.refresh()
 
+# center function is used to display text at the center of the screen
 def center(y_offset,x_offset,string,style=normal,noshift=False,type=screen):
     y_pos=y_mid()+y_offset
     middle_x=x_mid()+x_offset
-    if noshift==True:
-        x_pos=middle_x
+    if noshift:             # If noshift is true, then the beginning of the text is printed at the center,
+        x_pos=middle_x      # else the middle of the text is printed at the center
     else:
         x_padding=len(string)//2
         x_pos=middle_x-x_padding
     type.addstr(y_pos,x_pos,string,style)
-    #screen.refresh()
 
 # x_mid function is used to find the middle value of the total x value of the current window size
 def x_mid():
@@ -87,6 +87,7 @@ def finish():
    curses.endwin()
    exit()
 
+# highlight_checker is used to display and interact with options
 def highlight_checker(index,value,control=1):
     if control:
         if index==value:
@@ -100,7 +101,6 @@ def highlight_checker(index,value,control=1):
 ##########################
 
 # Note: This is a custom keyless encryption written from scratch
-
 # str_to_bin takes the characters in a string and returns a list of individual character in 7-bit binary format 
 def str_to_bin(in_string):
     bin_list=[]
@@ -163,11 +163,13 @@ def crypt(message):
 ### Login Section ###
 #####################
 
+# default_login is called if a Master password is found. 
+# Master password is stored in .pass.crypt file along with other passwords
 def default_login():
     passhash=""
     full_pass=""
     index=0
-    passbox=screen.subwin(3,60,y_mid()-2,x_mid()-30)
+    passbox=screen.subwin(3,60,y_mid()-2,x_mid()-30)    # Create a Sub window over the screen
     clear()
     while True:
         border()
@@ -176,11 +178,11 @@ def default_login():
         center(-3,0,"Enter Master Password",bold)
         center(-1,0,passhash,bold)
         refresh()
-        curses.curs_set(1)
+        curses.curs_set(1)                              # Turn on the visiblity of cursor
         passwd=ckey()
-        curses.curs_set(0)
+        curses.curs_set(0)                              # Turn off the visiblity of cursor
         clear()
-        if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER key
+        if passwd==10 or passwd==curses.KEY_ENTER:      #10 is ENTER key
             if full_pass==mp:
                 return menu1()
             clear()
@@ -195,17 +197,21 @@ def default_login():
             continue
         elif passwd==27: # 27 is ESC key
             return finish()
+        elif passwd==curses.KEY_LEFT or passwd==curses.KEY_RIGHT or passwd==curses.KEY_UP or passwd==curses.KEY_DOWN:
+            continue
         full_pass+=chr(passwd)
         if len(passhash)<54:
             passhash+=passhide
 
+# init_login is called if a Master password is not found. 
+# A new .pass.crypt file is generated and New Master Password is encrypted and saved
 def init_login(passhide="#"):
     clear()
     full_pass1=""
     full_pass2=""
     passbox=screen.subwin(3,100,y_mid()-2,x_mid()-50)
     passhash=""
-    while True:
+    while True:                                                 # Enter the New Master Password
         border()
         passbox.border()
         title(TITLE)
@@ -216,10 +222,10 @@ def init_login(passhide="#"):
         passwd=ckey()
         curses.curs_set(0)
         clear()
-        if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER key
+        if passwd==10 or passwd==curses.KEY_ENTER:              #10 is ENTER key
             full_pass1=full_pass1.strip()
-            if len(full_pass1)<6:
-                clear()
+            if len(full_pass1)<6:                               # Check if the entered password has atleast 6 characters
+                clear()                                         # If not, reset the screen with Warning Message
                 center(1, 0, "Minimum 6 characters Required",dim)
                 refresh()
                 full_pass1=""
@@ -227,44 +233,48 @@ def init_login(passhide="#"):
                 continue
             else:
                 break
-        elif passwd==curses.KEY_BACKSPACE:
+        elif passwd==curses.KEY_BACKSPACE:                      # Remove a character from the entered password
             full_pass1=full_pass1[:-1]
             passhash=passhash[:-1]
             continue
-        elif passwd==27: # 27 is ESC key
+        elif passwd==27:                                        # 27 is ESC key
             return finish()
+        elif passwd==curses.KEY_LEFT or passwd==curses.KEY_RIGHT or passwd==curses.KEY_UP or passwd==curses.KEY_DOWN:
+            continue                                            # This prevents the use of arrow keys
         full_pass1+=chr(passwd)
-        if len(passhash)<84:
-            passhash+=passhide
+        if len(passhash)<54:                                    # After the given characters, no more visual feedback is displayed
+            passhash+=passhide                                  # This is to prevent errors from displaying more characters than possible
     passhash=""
     while True:
         clear()
         border()
         passbox.border()
         title(TITLE)
-        center(-3,0,"Confirm The Master Password",bold)
+        center(-3,0,"Confirm The Master Password",bold)         # Ask to re-enter the Master Password to verify
         center(-1,0,passhash,bold)
         refresh()
         curses.curs_set(1)
         passwd=ckey()
         curses.curs_set(0)
-        if passwd==10 or passwd==curses.KEY_ENTER: #10 is ENTER key
+        if passwd==10 or passwd==curses.KEY_ENTER:              # 10 is ENTER key
             break
-        elif passwd==curses.KEY_BACKSPACE:
+        elif passwd==curses.KEY_BACKSPACE:                      # Remove a character from the entered password
             full_pass2=full_pass2[:-1]
             passhash=passhash[:-1]
             continue
-        elif passwd==27: # 27 is ESC key
+        elif passwd==27:                                        # 27 is ESC key
             return finish()
+        elif passwd==curses.KEY_LEFT or passwd==curses.KEY_RIGHT or passwd==curses.KEY_UP or passwd==curses.KEY_DOWN:
+            continue
         full_pass2+=chr(passwd)
-        if len(passhash)<84:
+        if len(passhash)<54:
             passhash+=passhide
     clear()
     border()
-    if full_pass1==full_pass2:
-        center(0, 0, "New Master Password Saved!",bold)
-        refresh()
-        sleep(delay)
+    if full_pass1==full_pass2:                                  # If both the inputs match, then encrypt the Master Password
+        center(0, 0, "New Master Password Saved!",bold)         # and save it to .pass.crypt file
+        refresh()                                               # Else, Display a warning message and reset the screen after 
+        sleep(delay)                                            # a specified delay
         file=open(".pass.crypt","w")   
         file.write(crypt("Master"))
         file.write("::::::::")
@@ -286,8 +296,9 @@ def init_login(passhide="#"):
 ### Menu Section ###
 ####################
 
+# menu1 is the primary menu. It is displayed right after the correct Master Password is entered
 def menu1():
-    menu1_list=[["  Password Manager  ",pass_manager],[" Password Generator ",pass_gen],["      Settings      ",settings]]
+    menu1_list=(("  Password Manager  ",pass_manager),(" Password Generator ",pass_gen),("      Settings      ",settings))
     checker=0
     while True:
         clear()
@@ -328,7 +339,7 @@ def pass_gen():
         password+=y
     passbox=screen.subwin(3,pass_gen_length+10,y_mid()-2,x_mid()-((pass_gen_length//2)+5))
     checker=0
-    pass_gen_options=[" Copy to Clipboard "," Re-Generate "]
+    pass_gen_options=(" Copy to Clipboard "," Re-Generate ")
     clear()
     while True:
         border()
@@ -373,7 +384,7 @@ def pass_gen():
 
 def pass_manager():
     checker=0
-    menu_list=[["   Add New Password   ",add_password],[" List Saved Passwords ",list_password]]
+    menu_list=(("   Add New Password   ",add_password),(" List Saved Passwords ",list_password))
     while True:
         clear()
         border()
@@ -672,7 +683,7 @@ def delete_details(data):
 ########################
 
 def settings():
-    global delay,pass_gen_length,TITLE,prefix,suffix
+    global delay,pass_gen_length,TITLE,prefix,suffix,passhide
     action_list=[100,2]
     checker=0
     while True:
@@ -683,16 +694,17 @@ def settings():
         center(-2, 0, "  Title:  '"+TITLE+"'  ",highlight_checker(2, checker))
         center(0, 0, "  Title Prefix:  '"+prefix+"'  ",highlight_checker(3, checker))
         center(2, 0, "  Title Suffix:  '"+suffix+"'  ",highlight_checker(4, checker))
+        center(4, 0, "  Password Hider:  '"+passhide+"'  ",highlight_checker(5, checker))
         refresh()
         key=ckey()
         if key==curses.KEY_DOWN:
             checker+=1
-            if checker>4:
+            if checker>5:
                 checker=0
         elif key==curses.KEY_UP:
             checker-=1
             if checker<0:
-                checker=4
+                checker=5
         elif key==curses.KEY_LEFT:
             if checker==0:
                 delay-=action_list[checker]
@@ -710,6 +722,8 @@ def settings():
                 change_title(1)
             if checker==4:
                 change_title(2)
+            if checker==5:
+                change_title(3)
             config_write()
         elif key==curses.KEY_BACKSPACE:
             config_write()
@@ -723,10 +737,11 @@ def settings():
 
 
 def change_title(index):
-    global TITLE,prefix,suffix
+    global TITLE,prefix,suffix,passhide
     option_list=["Enter New Title:",
                  "Enter New Prefix:",
-                 "Enter New Suffix:"]
+                 "Enter New Suffix:",
+                 "Enter New Hider:"]
     textbox=screen.subwin(3,x_mid(),y_mid()-1, x_mid()-(x_mid()//4))
     new_val=""
     while True:
@@ -752,6 +767,8 @@ def change_title(index):
                 prefix=new_val
             elif index==2:
                 suffix=new_val
+            elif index==3:
+                passhide=new_val
             return
         else:
             new_val+=chr(key)
@@ -766,12 +783,12 @@ def change_title(index):
 def config_read():
     global pass_gen_length,prefix,suffix,TITLE,delay,passhide
     file=open("settings.config","r")
-    conf_list= ["generated_password_lenght",
+    conf_list= ("generated_password_lenght",
                 "prefix",
                 "suffix",
                 "title",
                 "delay",
-                "password_hide"]
+                "password_hide")
     for x in file:
         x=x.strip()
         if x.startswith("#") or not(x):
@@ -782,6 +799,9 @@ def config_read():
         if not(value) or not(defin):
             continue
         if conf_list[0] in defin:
+            if int(value)>64:
+                pass_gen_length=64
+                continue
             pass_gen_length=int(value)
         elif conf_list[1] in defin:
             prefix=value[1:-1]
@@ -801,17 +821,17 @@ def config_write():
     notice="#This is the program config file. This can be modified by editing (Not recommended) or can be done via settings within the program.\n#This is setup to avoid direct modification of the code file.\n#Comments can be added to the file by placing '#' at the beginning of the line.\n\n"
     file.write(notice)
     file.write("\n")
-    init_conf_list=[["#Option to set the generated password lenght. Max lenght is limited to 68 characters to fit the screen.\n#Set a value from 8-64\n",
-                            "generated_password_lenght= "+str(pass_gen_length)+"\n"],
-                    ["#Option to set the prefix and suffix of the title. Include quotation for strings (Ex:' ##' and '## ')\n",
+    init_conf_list=(("#Option to set the generated password lenght. Max lenght is limited to 68 characters to fit the screen.\n#Set a value from 8-64\n",
+                            "generated_password_lenght= "+str(pass_gen_length)+"\n"),
+                    ("#Option to set the prefix and suffix of the title. Include quotation for strings (Ex:' ##' and '## ')\n",
                             "prefix= '"+prefix+"'\n",
-                            "suffix= '"+suffix+"'\n"],
-                    ["#Option to set the program name. Default name is 'Vault' followed by its version. Include quotation for strings\n",
-                            "title= '"+TITLE+"'\n"],
-                    ["#Option to set delay in milliseconds for the displayed messages\n",
-                            "delay= "+str(delay)+"\n"],
-                    ["#Option to set the password hider. Default hider is '#' and can be empty to hide passwords completely. Include quotation for strings\n",
-                            "password_hide= '"+passhide+"'\n"]]
+                            "suffix= '"+suffix+"'\n"),
+                    ("#Option to set the program name. Default name is 'Vault' followed by its version. Include quotation for strings\n",
+                            "title= '"+TITLE+"'\n"),
+                    ("#Option to set delay in milliseconds for the displayed messages\n",
+                            "delay= "+str(delay)+"\n"),
+                    ("#Option to set the password hider. Default hider is '#' and can be empty to hide passwords completely. Include quotation for strings\n",
+                            "password_hide= '"+passhide+"'\n"))
     for x in init_conf_list:
         for y in x:
             file.write(y)
@@ -905,7 +925,7 @@ prefix=" ##"
 suffix="## "
 TITLE="VAULT v3"
 
-delay=2000                          # In milliseconds
+delay=2000             # In milliseconds
 
 
 try:
