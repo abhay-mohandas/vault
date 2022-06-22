@@ -205,7 +205,7 @@ def default_login():
 
 # init_login is called if a Master password is not found. 
 # A new .pass.crypt file is generated and New Master Password is encrypted and saved
-def init_login(passhide="#"):
+def init_login():
     clear()
     full_pass1=""
     full_pass2=""
@@ -281,10 +281,15 @@ def init_login(passhide="#"):
         file.write(crypt(full_pass1))
         file.write("\n########\n")
         file.close()
+        clear()
+        border()
         center(-1, 0, "Restart The Program To Reset To New Master Password",bold)
         center(+1, 0, "Press Any Key to Continue",dim)
+        refresh()
         ckey()
-        return finish()
+        #exit()
+        #return finish()
+        return
     else:
         center(0, 0, "Passwords Doesn't Match! Try Again...")
         refresh()
@@ -714,7 +719,8 @@ def settings():
             if checker==0:
                 delay+=action_list[checker]
             elif checker==1:
-                pass_gen_length+=action_list[checker]
+                if pass_gen_length<64:
+                    pass_gen_length+=action_list[checker]
         elif key==10:
             if checker==2:
                 change_title(0)
@@ -731,10 +737,6 @@ def settings():
         elif key==27:
             config_write()
             return finish()
-
-
-
-
 
 def change_title(index):
     global TITLE,prefix,suffix,passhide
@@ -923,10 +925,9 @@ pass_gen_length=18
 
 prefix=" ##"
 suffix="## "
-TITLE="VAULT v3"
+TITLE="VAULT v5.2"
 
 delay=2000             # In milliseconds
-
 
 try:
     open("settings.config","x")
@@ -941,9 +942,8 @@ except:
 try:
     open(".pass.crypt","x")
     init_login()
-except:
+    finish()
+except FileExistsError:
     list_update_read()
     default_login()
-
-
-finish()
+    finish()
