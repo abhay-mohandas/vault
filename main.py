@@ -942,8 +942,7 @@ except:
 try:
     open(".pass.crypt","x")
     init_login()
-    finish()
 except FileExistsError:
     list_update_read()
     default_login()
-    finish()
+finish()
