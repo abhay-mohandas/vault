@@ -36,7 +36,6 @@ char=('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
 num=('0','1','2','3','4','5','6','7','8','9')
 list_char=(char,num,special_char)
 
-
 #################################################################################################################################
 
 #title function is used to print titles on screen
@@ -912,18 +911,17 @@ def list_update_write():
 ### Global Variable Section ###
 ###############################
 
-passhide="#"
 mp=""
 usrnm_pass=[]
 xlen=0
 ylen=0
 
+# Default Vaules
+passhide="#"
 pass_gen_length=18
-
 prefix=" ##"
 suffix="## "
 TITLE="VAULT v5.2"
-
 delay=2000             # In milliseconds
 
 try:
