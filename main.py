@@ -85,7 +85,6 @@ def finish():
    curses.curs_set(1)
    screen.keypad(False)
    curses.endwin()
-   exit()
 
 # highlight_checker is used to display and interact with options
 def highlight_checker(index,value,control=1):
@@ -287,9 +286,7 @@ def init_login():
         center(+1, 0, "Press Any Key to Continue",dim)
         refresh()
         ckey()
-        #exit()
-        #return finish()
-        return
+        return finish()
     else:
         center(0, 0, "Passwords Doesn't Match! Try Again...")
         refresh()
@@ -940,9 +937,9 @@ except:
         config_error()
 
 try:
-    open(".pass.crypt","x")
-    init_login()
-except FileExistsError:
     list_update_read()
     default_login()
+except:
+    open(".pass.crypt","x")
+    init_login()
 finish()
