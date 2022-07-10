@@ -814,7 +814,7 @@ def change_title(index):
 
 def config_read():
     global pass_gen_length,prefix,suffix,TITLE,delay,passhide
-    file=open("settings.config","r")
+    file=open(".settings.config","r")
     conf_list= ("generated_password_lenght",
                 "prefix",
                 "suffix",
@@ -849,7 +849,7 @@ def config_read():
 
 
 def config_write():
-    file=open("settings.config","w")
+    file=open(".settings.config","w")
     notice="#This is the program config file. This can be modified by editing (Not recommended) or can be done via settings within the program.\n#This is setup to avoid direct modification of the code file.\n#Comments can be added to the file by placing '#' at the beginning of the line.\n\n"
     file.write(notice)
     file.write("\n")
@@ -959,7 +959,7 @@ TITLE="VAULT v5.2"
 delay=2000             # In milliseconds
 
 try:
-    open("settings.config","x")
+    open(".settings.config","x")
     init_config()
     config_read()
 except:
