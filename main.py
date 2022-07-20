@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import curses                       # curses module is used to draw/print text at any location in the window
 import secrets                      # secret module is used to generate password. This is recommended over random module for passwords
 from pyperclip import copy, paste   # pyperclip is used to copy and paste details to the clipboard
+from sys import exit
 
 
 screen=curses.initscr()             # Initializing the curses screen
@@ -118,6 +119,7 @@ def finish():
    curses.curs_set(1)
    screen.keypad(False)
    curses.endwin()
+   exit()
 
 # highlight_checker is used to display and interact with options
 def highlight_checker(index,value,control=1):
@@ -139,16 +141,16 @@ def str_to_bin(in_string):
     for x in in_string:
         binary=ord(x)
         binary=bin(binary)
-        if len(binary[2:])<7:                       #
+        if len(binary[2:])<8:                       #
             padding=""                              # This section pads with additional zeros at the left side incase
-            for y in range(7-len(binary[2:])):      # the lenght of the binary format is less than 7-bit
+            for y in range(8-len(binary[2:])):      # the lenght of the binary format is less than 8-bit
                 padding+="0"                        #
             binary=binary[:2]+padding+binary[2:]    #
         bin_list.append(binary[2:])
     return bin_list
 
-# matrix function generates and returns a 7x7 binary matrix of the given list
-def matrix(run_list,default=7):                 
+# matrix function generates and returns a 8x8 binary matrix of the given list
+def matrix(run_list,default=8):                 
     return_list=[]
     while run_list:
         temp_list=[]
@@ -158,7 +160,7 @@ def matrix(run_list,default=7):
         else:
             temp_list=run_list                      #
             for _ in range(default-len(run_list)):  # This section handles the padding with blank space to complete
-                temp_list.append("0100000")         # the 7x7 matrix if there are insufficient number of message
+                temp_list.append("11111111")        # the 8x8 matrix if there are insufficient number of message
             run_list=0                              # bits
         return_list.append(temp_list)               #
     return return_list
@@ -169,14 +171,14 @@ def crypt_calc(msg_mat):
     temp_mat2=[]
     for i in msg_mat:                           #
         z=0                                     #   Ex:
-        temp_mat1=[]                            #       
-        for j in range(len(i)):                 #      |1|1 0 0 0 1 1 <- input bits (row wise)
-            temp=""                             #      |1|1 1 0 0 0 0
-            for x in i:                         #      |1|0 0 0 0 0 1
-                temp+=x[z]                      #      |0|0 1 1 1 1 0
-            temp_mat1.append(temp)              #      |1|1 0 0 0 0 0
-            z+=1                                #      |0|1 0 0 1 1 0
-        temp_mat2.append(temp_mat1)             #      |1|1 1 1 1 1 0
+        temp_mat1=[]                            #      |0|1 1 0 0 1 1 0 <- input bits (row wise)
+        for j in range(len(i)):                 #      |1|1 0 0 0 1 1 0 
+            temp=""                             #      |1|1 1 0 0 0 0 0
+            for x in i:                         #      |1|0 0 0 0 0 1 0
+                temp+=x[z]                      #      |0|0 1 1 1 1 0 0
+            temp_mat1.append(temp)              #      |1|1 0 0 0 0 0 0
+            z+=1                                #      |0|1 0 0 1 1 0 0
+        temp_mat2.append(temp_mat1)             #      |1|1 1 1 1 1 0 0
     final=""                                    #       ^
     for a in temp_mat2:                         #       |
         for b in a:                             #       output bits (column wise)
@@ -481,7 +483,7 @@ def enter_username(username='',password=''):
         key=ckey()
         curses.curs_set(0)
         if key==27: # 27 is ESC key
-            return finish()
+            finish()
         elif key==10 or key==curses.KEY_ENTER:
             username=username.strip()
             if not username:
@@ -513,7 +515,7 @@ def enter_password(password='',username=''):
         key=ckey()
         curses.curs_set(0)
         if key==27: # 27 is ESC key
-            return finish()
+            finish()
         elif key==10 or key==curses.KEY_ENTER:
             password=password.strip()
             if not password:
@@ -555,7 +557,6 @@ def list_password():
     while True:
         y_ref,x_ref=yx_total(1,1)
         listpad.clear()
-        #clear()
         title("Password List")
         border()
         refresh()
@@ -915,7 +916,15 @@ def list_update_read():
             break
         temp=x.split("::::::::")
         username=crypt(temp[0]).strip()
+        while True:
+            if not(username.endswith(chr(int("0b11111111",2)))):
+                break
+            username=username[:-1]
         passwd=crypt(temp[1]).strip()
+        while True:
+            if not(passwd.endswith(chr(int("0b11111111",2)))):
+                break
+            passwd=passwd[:-1]
         if username=="Master":
             mp=passwd
             track=False
@@ -955,7 +964,7 @@ passhide="#"
 pass_gen_length=18
 prefix=" ##"
 suffix="## "
-TITLE="VAULT v5.2"
+TITLE="VAULT v5.3"
 delay=2000             # In milliseconds
 
 try:
@@ -971,7 +980,7 @@ except:
 try:
     list_update_read()
     default_login()
-except:
+except FileNotFoundError:
     open(".pass.crypt","x")
     init_login()
 finish()
