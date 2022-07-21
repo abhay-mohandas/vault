@@ -187,9 +187,12 @@ def crypt_calc(msg_mat):
 
 # crypt handles and merges the encyption/decryption functions
 def crypt(message):
-    message_list=str_to_bin(message)        # -convertion of strings to list of bits 
-    mess_list_bin=matrix(message_list)      # -converting list of bits to matrix (list of lists)
-    return crypt_calc(mess_list_bin)        # -return encrypted/decrypted message from the binary matrix
+    message=message.replace("\\r","\r")         # -Replacing '\\r' with '\r': Encryption Bug Fix/Mitigation
+    message_list=str_to_bin(message)            # -convertion of strings to list of bits 
+    mess_list_bin=matrix(message_list)          # -converting list of bits to matrix (list of lists)
+    crypt_mess=crypt_calc(mess_list_bin)        # -return encrypted/decrypted message from the binary matrix
+    crypt_mess=crypt_mess.replace("\r", "\\r")  # -Replacing '\r' with '\\r': Encryption Bug Fix/Mitigation
+    return crypt_mess
 
 #################################################################################################################################
 
@@ -563,7 +566,7 @@ def list_password():
         listpad.border()
         for x in range(len(usrnm_pass)):
             listpad.addstr(x+1,3,usrnm_pass[x][0],highlight_checker(x, checker))
-        listpad.refresh(y_loc,0,3,x_mid()-(xlen//2),y_ref-2,x_mid()+25)
+        listpad.refresh(y_loc,0,3,x_mid()-(xlen//2),y_ref-2,x_ref-2)#x_mid()+25)
         key=listpad.getch()
         if key==curses.KEY_DOWN:
             if checker<count-1:
@@ -586,14 +589,9 @@ def show_password(pass_details):
     clear()
     y_max,x_max=yx_total()
     username,password=pass_details[0],pass_details[1]
-    if xlen>ylen and xlen>50:
-        long=xlen
-    elif ylen>50:
-        long=ylen
-    else:
-        long=50
-    usrnbox=screen.subwin(3,long,y_mid()-4,x_mid()-(x_mid()//2)-5)
-    passbox=screen.subwin(3,long,y_mid()-1,x_mid()-(x_mid()//2)-5)
+    long=x_mid()
+    usrnbox=screen.subwin(3,long,y_mid()-4,x_mid()-(x_mid()//2)-25)
+    passbox=screen.subwin(3,long,y_mid()-1,x_mid()-(x_mid()//2)-25)
     options=[["  Copy Username  ",copy,username],
              ["  Copy Password  ",copy,password],
              [" Update Username ",update_details,[1,username,password]],
@@ -605,10 +603,10 @@ def show_password(pass_details):
         title("Details")
         usrnbox.border()
         passbox.border()
-        center(-3, -x_mid()+(4*(x_mid()//10)), 'Username:',bold)
-        center(0, -x_mid()+(4*(x_mid()//10)), 'Password:',bold)
-        center(-3, -x_mid()//2, username,bold,True)
-        center(0, -x_mid()//2, password,bold,True)
+        center(-3, -x_mid()+(4*(x_mid()//10))-20, 'Username:',bold)
+        center(0, -x_mid()+(4*(x_mid()//10))-20, 'Password:',bold)
+        center(-3, (-x_mid()//2)-20, username[:long-6],bold,True)
+        center(0, (-x_mid()//2)-20, password[:long-6],bold,True)
         option_spacing=y_mid()//4
         temp=(y_mid()//10)*6
         for x in range(len(options)):
@@ -927,7 +925,6 @@ def list_update_read():
             passwd=passwd[:-1]
         if username=="Master":
             mp=passwd
-            track=False
             continue
         if xlen<len(username):
             xlen=len(username)+6
