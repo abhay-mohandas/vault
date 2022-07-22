@@ -160,7 +160,7 @@ def matrix(run_list,default=8):
         else:
             temp_list=run_list                      #
             for _ in range(default-len(run_list)):  # This section handles the padding with blank space to complete
-                temp_list.append("11111111")        # the 8x8 matrix if there are insufficient number of message
+                temp_list.append(padding_bin)        # the 8x8 matrix if there are insufficient number of message
             run_list=0                              # bits
         return_list.append(temp_list)               #
     return return_list
@@ -915,12 +915,12 @@ def list_update_read():
         temp=x.split("::::::::")
         username=crypt(temp[0]).strip()
         while True:
-            if not(username.endswith(chr(int("0b11111111",2)))):
+            if not(username.endswith(chr(int("0b"+padding_bin,2)))):
                 break
             username=username[:-1]
         passwd=crypt(temp[1]).strip()
         while True:
-            if not(passwd.endswith(chr(int("0b11111111",2)))):
+            if not(passwd.endswith(chr(int("0b"+padding_bin,2)))):
                 break
             passwd=passwd[:-1]
         if username=="Master":
@@ -934,10 +934,12 @@ def list_update_read():
 
 
 def list_update_write():
+    MASTER=crypt("Master")
+    MAS_PASS=crypt(mp)
     file=open(".pass.crypt","w")
-    file.write(crypt("Master"))
+    file.write(MASTER)
     file.write("::::::::")
-    file.write(crypt(mp))
+    file.write(MAS_PASS)
     file.write("\n########\n")
     for x in usrnm_pass:
         file.write(crypt(x[0]))
@@ -955,6 +957,7 @@ mp=""
 usrnm_pass=[]
 xlen=0
 ylen=0
+padding_bin="00100000"
 
 # Default Vaules
 passhide="#"
@@ -978,6 +981,5 @@ try:
     list_update_read()
     default_login()
 except FileNotFoundError:
-    open(".pass.crypt","x")
     init_login()
 finish()
