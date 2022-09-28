@@ -964,7 +964,7 @@ passhide="#"
 pass_gen_length=18
 prefix=" ##"
 suffix="## "
-TITLE="VAULT v5.3"
+TITLE="VAULT v0.5.3"
 delay=2000             # In milliseconds
 
 try:
