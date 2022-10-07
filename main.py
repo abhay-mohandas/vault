@@ -37,6 +37,7 @@ import curses                       # curses module is used to draw/print text a
 import secrets                      # secret module is used to generate password. This is recommended over random module for passwords
 from pyperclip import copy, paste   # pyperclip is used to copy and paste details to the clipboard
 from sys import exit
+import numpy as np
 
 
 screen=curses.initscr()             # Initializing the curses screen
@@ -136,53 +137,39 @@ def highlight_checker(index,value,control=1):
 # Note: This is a custom keyless encryption written from scratch
 # str_to_bin takes the characters in a string and returns a list of individual character in 7-bit binary format 
 def str_to_bin(in_string):
-    bin_list=[]
+    bin_list=''
     for x in in_string:
-        binary=ord(x)
-        binary=bin(binary)
-        if len(binary[2:])<8:                       #
-            padding=""                              # This section pads with additional zeros at the left side incase
-            for y in range(8-len(binary[2:])):      # the lenght of the binary format is less than 8-bit
-                padding+="0"                        #
-            binary=binary[:2]+padding+binary[2:]    #
-        bin_list.append(binary[2:])
+        binary = bin(ord(x))[2:]
+        if len(binary)<8:                   #
+            padding="0"*(8-len(binary))         # This section pads with additional zeros at the left side incase
+            binary=padding+binary               # the lenght of the binary format is less than 8-bit 
+        bin_list+=binary          #
     return bin_list
 
 # matrix function generates and returns a 8x8 binary matrix of the given list
-def matrix(run_list,default=8):                 
+def matrix(run_list,default=8**2): 
     return_list=[]
     while run_list:
-        temp_list=[]
+        temp_list=''
         if len(run_list)>=default:
             temp_list=run_list[:default]
             run_list=run_list[default:]
         else:
-            temp_list=run_list                      #
-            for _ in range(default-len(run_list)):  # This section handles the padding with blank space to complete
-                temp_list.append(padding_bin)        # the 8x8 matrix if there are insufficient number of message
-            run_list=0                              # bits
-        return_list.append(temp_list)               #
+            temp_list=run_list+(padding_bin*(8-(len(run_list)//8)))    # the 8x8 matrix if there are insufficient number of message
+            run_list=0                              #
+        temp_list = np.array([*temp_list]).reshape(8,8)# bits
+        return_list.append(temp_list.T)              #
     return return_list
 
 # crypt_calc converts the given binary matrix to encrypted message. It also converts the encrypted text binary back 
 # to original text. So this function handles both encryption and decryption
 def crypt_calc(msg_mat):
-    temp_mat2=[]
-    for i in msg_mat:                           #
-        z=0                                     #   Ex:
-        temp_mat1=[]                            #      |0|1 1 0 0 1 1 0 <- input bits (row wise)
-        for j in range(len(i)):                 #      |1|1 0 0 0 1 1 0 
-            temp=""                             #      |1|1 1 0 0 0 0 0
-            for x in i:                         #      |1|0 0 0 0 0 1 0
-                temp+=x[z]                      #      |0|0 1 1 1 1 0 0
-            temp_mat1.append(temp)              #      |1|1 0 0 0 0 0 0
-            z+=1                                #      |0|1 0 0 1 1 0 0
-        temp_mat2.append(temp_mat1)             #      |1|1 1 1 1 1 0 0
-    final=""                                    #       ^
-    for a in temp_mat2:                         #       |
-        for b in a:                             #       output bits (column wise)
-            final+=chr(int("0b"+b,2))           #
-    return final                                #
+    final=""                                    #       |0|1 0 0 1 1 0 0
+    for a in msg_mat:                         #       |1|1 1 1 1 1 0 0
+        for b in a:
+            b=''.join(b)                        #        ^
+            final+=chr(int("0b"+b,2))           #        |
+    return final                                #       output bits (column wise)
 
 # crypt handles and merges the encyption/decryption functions
 def crypt(message):
@@ -245,7 +232,7 @@ def init_login():
     clear()
     full_pass1=""
     full_pass2=""
-    passbox=screen.subwin(3,100,y_mid()-2,x_mid()-50)
+    passbox=screen.subwin(3,x_mid(),y_mid()-2,x_mid()-50)
     passhash=""
     while True:                                                 # Enter the New Master Password
         border()
@@ -768,10 +755,10 @@ def settings():
 
 def change_title(index):
     global TITLE,prefix,suffix,passhide
-    option_list=["Enter New Title:",
+    option_list=("Enter New Title:",
                  "Enter New Prefix:",
                  "Enter New Suffix:",
-                 "Enter New Hider:"]
+                 "Enter New Hider:")
     textbox=screen.subwin(3,x_mid(),y_mid()-1, x_mid()-(x_mid()//4))
     new_val=""
     while True:
