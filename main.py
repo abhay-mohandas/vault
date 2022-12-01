@@ -171,6 +171,10 @@ def crypt_calc(msg_mat):
             final+=chr(int("0b"+b,2))           #        |
     return final                                #       output bits (column wise)
 
+def bug_fix(data):
+    data = data.replace("\\r","\r")
+    data = data.replace("\x1e","\\x1e")
+
 # crypt handles and merges the encyption/decryption functions
 def crypt(message):
     message=message.replace("\\r","\r")         # -Replacing '\\r' with '\r': Encryption Bug Fix/Mitigation
@@ -194,6 +198,9 @@ def default_login():
     index=0
     passbox=screen.subwin(3,60,y_mid()-2,x_mid()-30)    # Create a Sub window over the screen
     clear()
+    curses.endwin()
+    print(mp)
+    exit()
     while True:
         border()
         passbox.border()
